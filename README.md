@@ -8,3 +8,7 @@
 * [Variational neural annealing paper link](https://arxiv.org/abs/2101.10154)
 * [RNN wave functions github](https://github.com/mhibatallah/RNNWavefunctions)
 * [RNN wave functions Paper](https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.023358)
+
+## Environmental setting
+* Package version: Tensorflow 2.4.1, cudatoolkit 11.2, cudnn: 8.6.5
+* GPU: RTX 3080
