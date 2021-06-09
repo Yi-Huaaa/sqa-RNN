@@ -1,0 +1,20 @@
+DATA = 1
+min_Ham_idx =  341 ,Ham_gd =  -3.6855747231638887
+DATA = 2
+min_Ham_idx =  341 ,Ham_gd =  -5.967966896297838
+DATA = 3
+min_Ham_idx =  341 ,Ham_gd =  -2.959141766554266
+DATA = 4
+min_Ham_idx =  341 ,Ham_gd =  -6.604093948354414
+DATA = 5
+min_Ham_idx =  341 ,Ham_gd =  -5.513540137941693
+DATA = 6
+min_Ham_idx =  341 ,Ham_gd =  -3.865405781334599
+DATA = 7
+min_Ham_idx =  341 ,Ham_gd =  -3.3492665284767162
+DATA = 8
+min_Ham_idx =  341 ,Ham_gd =  -5.43612376953865
+DATA = 9
+min_Ham_idx =  341 ,Ham_gd =  -5.944943401761013
+DATA = 10
+min_Ham_idx =  341 ,Ham_gd =  -5.828198419355754
