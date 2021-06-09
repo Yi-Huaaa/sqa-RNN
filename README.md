@@ -10,5 +10,11 @@
 * [RNN wave functions Paper](https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.023358)
 
 ## Environmental setting
-* Package version: Tensorflow 2.4.1, cudatoolkit 11.2, cudnn: 8.6.5
-* GPU: RTX 3080
+* GeForce RTX 3080 computeCapability: 8.6
+* Created TensorFlow device (/device:GPU:0 with 7629 MB memory) -> physical GPU (device: 0, name: GeForce RTX 3080, pci bus id: 0000:01:00.0, compute capability: 8.6)
+* TensorFlow 2.5.0
+* Python 3.6.9
+* cudnn: 8.2.1
+
+## 重要發現
+* J1-J2 model，好像可以藉由調參數達到King graph的效果！太棒了
