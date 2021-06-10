@@ -59,8 +59,8 @@ def Ising_local_energies(Jz, Bx, samples, queue_samples, log_probs_tensor, sampl
 
             queue_samples[i+1] = valuesT
 
-    #Calculating log_probs from samples
-    #Do it in steps
+    # Calculating log_probs from samples
+    # Do it in steps
 
     # print("Estimating log probs started")
     # start = time.time()
@@ -120,7 +120,7 @@ def run_1DTFIM(numsteps = 10**4, systemsize = 20, num_units = 50, Bx = 1, num_la
     numsamples_=20 # only for initialization; wil be larger below
 
     # hua, 改：
-    wf = RNNwavefunction(N, units=units, cell = tf.keras.layers.GRUCell, seed = seed) #contains the graph with the RNNs
+    wf = RNNwavefunction(N, units = units, cell = tf.keras.layers.GRUCell, seed = seed) #contains the graph with the RNNs
     #origin:cell = tf.compat.v1.nn.rnn_cell.GRUCell, seed = seed) 
     sampling = wf.sample(numsamples_, input_dim)
     

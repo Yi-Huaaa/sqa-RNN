@@ -1,10 +1,9 @@
+# 1D pRNN wavefunction, 1D problems
 '''
 重大改變
 * initialize用的 zero state 改法：rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float32)
 * 原：self.rnn = tf.compat.v1.nn.rnn_cell.MultiRNNCell([cell(units[n]) for n in range(len(units))])
   後：self.rnn = tf.keras.layers.StackedRNNCells([cell(units[n]) for n in range(len(units))])
-* 
-
 '''
 #This is an implementation of the 1D pRNN wavefunction without a parity symmetry
 # hua:2
