@@ -130,9 +130,10 @@ def run_1DTFIM(RNNtype = 0, activationType = 0, numsteps = 10**4, systemsize = 2
         tf.keras.layers.LSTMCell,
     ]
     activationFunctions = [
-        tf.nn.elu,
-        tf.keras.activations.elu,
+        tf.keras.activations.elu, 
         tf.keras.activations.relu,
+        tf.keras.activations.exponential,
+        tf.keras.activations.sigmoid
     ]
     print("cell type: ", RNNcells[RNNtype])
     print("activation Functions", activationFunctions[activationType])
