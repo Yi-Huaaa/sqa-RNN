@@ -1,5 +1,6 @@
 # SUccess to run
 # 1D Ising model, 1D RNN model
+# hua:2, 20210611, 17:41
 '''
 重大改變
 * initialize用的 zero state 改法：rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float32)
@@ -18,7 +19,10 @@ import random
 class RNNwavefunction(object):
     # units=units, cell=tf.compat.v1.nn.rnn_cell.GRUCell, seed = seed) #contains the graph with the RNNs
     # Hua: change_tf.nn.relu -> tf.nn.elu
-    def __init__(self, systemsize, cell = tf.compat.v1.nn.rnn_cell.GRUCell, activation = tf.nn.elu, units=[10], scope='RNNwavefunction', seed = 111):
+    #def __init__(self, systemsize, cell = tf.compat.v1.nn.rnn_cell.GRUCell, activation = tf.nn.elu, units=[10], scope='RNNwavefunction', seed = 111):
+    
+    def __init__(self, systemsize, cell, activation, units=[10], scope='RNNwavefunction', seed = 111):
+    #def __init__(self, systemsize, cell, activation = tf.nn.elu, units=[10], scope='RNNwavefunction', seed = 111):
         """
         Hua: 
             systemsize:  N (spin number)
