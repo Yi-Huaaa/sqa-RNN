@@ -1,3 +1,5 @@
+# Date: 20210611 17:46, hua
+# Success to run
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR) #stop displaying tensorflow warnings
 import numpy as np
@@ -68,11 +70,11 @@ def Ising2D_local_energies(Jz, Bx, Nx, Ny, samples, queue_samples, log_probs_ten
 
     queue_samples_reshaped = np.reshape(queue_samples, [(N+1)*numsamples, Nx,Ny])
     for i in range(steps):
-      if i < steps-1:
-          cut = slice((i*len_sigmas)//steps,((i+1)*len_sigmas)//steps)
-      else:
-          cut = slice((i*len_sigmas)//steps,len_sigmas)
-      log_probs[cut] = sess.run(log_probs_tensor, feed_dict={samples_placeholder:queue_samples_reshaped[cut]})
+        if i < steps-1:
+            cut = slice((i*len_sigmas)//steps,((i+1)*len_sigmas)//steps)
+        else:
+            cut = slice((i*len_sigmas)//steps,len_sigmas)
+        log_probs[cut] = sess.run(log_probs_tensor, feed_dict={samples_placeholder:queue_samples_reshaped[cut]})
       # print(i)
 
     log_probs_reshaped = np.reshape(log_probs, [N+1,numsamples])
@@ -94,16 +96,18 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
 
     # Intitializing the RNN-----------
     units=[num_units] #list containing the number of hidden units for each layer of the networks (We only support one layer for the moment)
-
+    # hua 1，改：
+    Nx=systemsize_x #x dim
+    Ny=systemsize_y #y dim
+    
     Jz = +np.ones((Nx,Ny)) #Ferromagnetic couplings
     lr=np.float64(learningrate)
 
-    Nx=systemsize_x #x dim
-    Ny=systemsize_y #y dim
 
-    input_dim=2 #Dimension of the Hilbert space for each site (here = 2, up or down)
-    numsamples_=20 #number of samples only for initialization
-    wf=RNNwavefunction(Nx,Ny,units=units,cell=MDRNNcell,seed = seed) #contains the graph with the RNNs
+
+    input_dim = 2 #Dimension of the Hilbert space for each site (here = 2, up or down)
+    numsamples_ = 20 #number of samples only for initialization
+    wf = RNNwavefunction(Nx,Ny,units=units, cell=MDRNNcell, seed = seed) #contains the graph with the RNNs
 
     sampling=wf.sample(numsamples_,input_dim) #call this function once to create the dense layers
 
@@ -121,12 +125,16 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
     #Starting Session------------
     #Activating GPU
     config = tf.compat.v1.ConfigProto()
-    config.gpu_options.allow_growth = True
+    # hua, 改
+    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    for device in gpu_devices:
+        tf.config.experimental.set_memory_growth(device, True)
+    #config.gpu_options.allow_growth = True
 
     sess=tf.compat.v1.Session(graph=wf.graph, config=config)
     sess.run(init)
     #---------------------------
-
+    '''
     with wf.graph.as_default():
         variables_names =[v.name for v in tf.compat.v1.trainable_variables()]
     #     print(variables_names)
@@ -141,7 +149,7 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
 
     meanEnergy=[]
     varEnergy=[]
-
+    
     #Running the training -------------------
     path=os.getcwd()
 
@@ -153,7 +161,7 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
         ending+='_{0}'.format(u)
     filename='../Check_Points/2DTFIM/RNNwavefunction_2DVanillaRNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending+'.ckpt'
     savename = '_2DTFIM'
-
+    '''
     with tf.compat.v1.variable_scope(wf.scope,reuse=tf.compat.v1.AUTO_REUSE):
         with wf.graph.as_default():
             Eloc=tf.compat.v1.placeholder(dtype=tf.float64,shape=[numsamples])
@@ -178,6 +186,9 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
     #         varEnergy=np.load('../Check_Points/2DTFIM/varEnergy_2DVanillaRNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending  + savename +'.npy').tolist()
     #-----------
 
+    # hua 5，改：
+    meanEnergy=[]
+    varEnergy=[]
 
     with tf.compat.v1.variable_scope(wf.scope,reuse=tf.compat.v1.AUTO_REUSE):
         with wf.graph.as_default():
@@ -210,9 +221,10 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
                 varEnergy.append(varE)
 
                 if it%10==0:                
-                   print('mean(E): {0}, var(E): {1}, #samples {2}, #Step {3} \n\n'.format(meanE,varE,numsamples, it))
+                    print('mean(E): {0}, var(E): {1}, #samples {2}, #Step {3} \n\n'.format(meanE,varE,numsamples, it))
               
-            #Comment if you dont want to save or if saving is not working
+                '''
+                #Comment if you dont want to save or if saving is not working
                 if it%500==0: #500 can be changed to suite your chosen number of iterations and to avoid slow down by saving the model too often
                   #Saving the model
                   saver.save(sess,path+'/'+filename)
@@ -222,7 +234,7 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
                   #Saving the performances
                   np.save('../Check_Points/2DTFIM/meanEnergy_2DVanillaRNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending  + savename +'.npy', meanEnergy)
                   np.save('../Check_Points/2DTFIM/varEnergy_2DVanillaRNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending + savename +'.npy', varEnergy)
-
+                '''
                 #lr_adaptation
                 lr_adapted = lr*(1+it/5000)**(-1)
                 #Optimize

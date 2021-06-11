@@ -1,7 +1,7 @@
+# Date: 20210611 17:46, hua
 import numpy as np
 import tensorflow as tf
 
-###################################################################################################333
 
 class MDRNNcell(tf.compat.v1.nn.rnn_cell.RNNCell):
     """An implementation of the most basic 2DRNN Vanilla RNN cell.
@@ -9,6 +9,9 @@ class MDRNNcell(tf.compat.v1.nn.rnn_cell.RNNCell):
         num_units (int): The number of units in the RNN cell, hidden layer size.
         num_in: Input vector size, input layer size.
     """
+    '''
+    
+    '''
 
     def __init__(self, num_units = None, num_in = None, name=None, dtype = None, reuse=None):
         super(MDRNNcell, self).__init__(_reuse=reuse, name=name)

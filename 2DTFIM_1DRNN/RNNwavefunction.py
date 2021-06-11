@@ -1,4 +1,6 @@
-#This is an implementation of the 1D pRNN wavefunction for 2D problems
+# Date: 20210611 17:45, hua
+#2D Ising model, 1D RNN model
+# Success to run
 
 import tensorflow as tf
 import numpy as np
@@ -6,7 +8,7 @@ import random
 
 
 class RNNwavefunction(object):
-    def __init__(self,systemsize_x, systemsize_y,cell=tf.compat.v1.nn.rnn_cell.LSTMCell,activation=tf.nn.relu,units=[10],scope='RNNwavefunction',seed = 111):
+    def __init__(self,systemsize_x, systemsize_y, cell = tf.compat.v1.nn.rnn_cell.GRUCell,activation=tf.nn.elu,units=[10],scope='RNNwavefunction',seed = 111):
         """
             systemsize_x:  int
                          number of sites for x-axis
@@ -32,10 +34,18 @@ class RNNwavefunction(object):
         #Defining the neural network
         with self.graph.as_default():
             with tf.compat.v1.variable_scope(self.scope,reuse=tf.compat.v1.AUTO_REUSE):
-                tf.compat.v1.set_random_seed(seed)  # tensorflow pseudo-random generator
+                # hua 1, 改：
+                tf.random.set_seed(seed)
+                #tf.compat.v1.set_random_seed(seed)  # tensorflow pseudo-random generator
                 #Define the RNN cell where units[n] corresponds to the number of memory units in each layer n
-                self.rnn=tf.compat.v1.nn.rnn_cell.MultiRNNCell([cell(units[n]) for n in range(len(units))])
-                self.dense = tf.compat.v1.layers.Dense(2,activation=tf.nn.softmax,name='wf_dense', dtype = tf.float64) #Define the Fully-Connected layer followed by a Softmax
+
+                # hua 1, 改：
+                self.rnn = tf.keras.layers.StackedRNNCells([cell(units[n]) for n in range(len(units))])                
+                #self.rnn=tf.compat.v1.nn.rnn_cell.MultiRNNCell([cell(units[n]) for n in range(len(units))])
+                
+                # hua 2, 改：
+                self.dense = tf.compat.v1.layers.Dense( 2, activation=tf.nn.softmax, name='wf_dense') #Fully-Connected, Softmax
+                #self.dense = tf.compat.v1.layers.Dense(2, activation=tf.nn.softmax, name='wf_dense', dtype = tf.float64) #Fully-Connected, Softmax
 
     def sample(self,numsamples,inputdim):
         """
@@ -59,7 +69,9 @@ class RNNwavefunction(object):
                 b=np.zeros((numsamples,inputdim)).astype(np.float64)
                 #b = state of sigma_0 for all the samples
                 
-                inputs=tf.constant(dtype=tf.float64,value=b,shape=[numsamples,inputdim]) #Feed the table b in tf.
+                #hua 2, 改：
+                inputs=tf.constant(dtype=tf.float32,value=b,shape=[numsamples,inputdim]) #Feed the table b in tf.
+                #inputs=tf.constant(dtype=tf.float64,value=b,shape=[numsamples,inputdim]) #Feed the table b in tf.
                 #Initial input to feed to the rnn
 
                 self.inputdim=inputs.shape[1]
@@ -68,16 +80,21 @@ class RNNwavefunction(object):
 
                 samples=[]
 
-                rnn_state=self.rnn.zero_state(self.numsamples,dtype=tf.float64)
-                #zero state returns a zero filled tensor withs shape = (self.numsamples, num_units)
+                #hua 1, 改：
+                # hua 2, 改：
+                rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float32) 
+                #rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float64) 
 
+                
                 for ny in range(self.Ny): #Loop over the lattice in a snake shape
-                  for nx in range(self.Nx): 
-                    rnn_output, rnn_state = self.rnn(inputs, rnn_state)
-                    output=self.dense(rnn_output)
-                    sample_temp=tf.reshape(tf.random.categorical(logits=tf.math.log(output),num_samples=1),[-1,])
-                    samples.append(sample_temp)
-                    inputs=tf.one_hot(sample_temp,depth=self.outputdim, dtype = tf.float64)
+                    for nx in range(self.Nx): 
+                        rnn_output, rnn_state = self.rnn(inputs, rnn_state)
+                        output=self.dense(rnn_output)
+                        sample_temp=tf.reshape(tf.random.categorical(logits=tf.math.log(output),num_samples=1),[-1,])
+                        samples.append(sample_temp)
+                        # hua 2, 改：
+                        inputs=tf.one_hot(sample_temp,depth=self.outputdim)
+                        #inputs=tf.one_hot(sample_temp,depth=self.outputdim, dtype = tf.float64)
 
         self.samples=tf.stack(values=samples,axis=1) # (self.N, num_samples) to (num_samples, self.N): Generate self.numsamples vectors of size self.N spin containing 0 or 1
 
@@ -105,24 +122,34 @@ class RNNwavefunction(object):
             self.outputdim=self.inputdim
 
             self.numsamples=tf.shape(input=samples)[0]
-            a=tf.zeros(self.numsamples, dtype=tf.float64)
-            b=tf.zeros(self.numsamples, dtype=tf.float64)
+            # hua 2, 改：
+            a=tf.zeros(self.numsamples, dtype=tf.float32)
+            b=tf.zeros(self.numsamples, dtype=tf.float32)
+            #a=tf.zeros(self.numsamples, dtype=tf.float64)
+            #b=tf.zeros(self.numsamples, dtype=tf.float64)
 
             inputs=tf.stack([a,b], axis = 1)
 
             with tf.compat.v1.variable_scope(self.scope,reuse=tf.compat.v1.AUTO_REUSE):
                 probs=[]
 
-                rnn_state=self.rnn.zero_state(self.numsamples,dtype=tf.float64)
+                #hua 1, 改：
+                # hua 2, 改：
+                rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float32) 
+                #rnn_state = self.rnn.get_initial_state(batch_size = self.numsamples, dtype = tf.float64) 
 
                 for ny in range(self.Ny):
-                  for nx in range(self.Nx):
-                      rnn_output, rnn_state = self.rnn(inputs, rnn_state)
-                      output=self.dense(rnn_output)
-                      probs.append(output)
-                      inputs=tf.reshape(tf.one_hot(tf.reshape(tf.slice(samples,begin=[np.int32(0),np.int32(ny*self.Nx+nx)],size=[np.int32(-1),np.int32(1)]),shape=[self.numsamples]),depth=self.outputdim,dtype = tf.float64),shape=[self.numsamples,self.inputdim])
+                    for nx in range(self.Nx):
+                        rnn_output, rnn_state = self.rnn(inputs, rnn_state)
+                        output=self.dense(rnn_output)
+                        probs.append(output)
+                        # hua 2, 改： 
+                        inputs = tf.reshape(tf.one_hot(tf.reshape(tf.slice(samples,begin=[np.int32(0),np.int32(ny*self.Nx+nx)],size=[np.int32(-1),np.int32(1)]), shape=[self.numsamples]),depth=self.outputdim),shape=[self.numsamples,self.inputdim])
+                        #inputs = tf.reshape(tf.one_hot(tf.reshape(tf.slice(samples,begin=[np.int32(0),np.int32(ny*self.Nx+nx)],size=[np.int32(-1),np.int32(1)]), shape=[self.numsamples]),depth=self.outputdim,dtype = tf.float64),shape=[self.numsamples,self.inputdim])
 
-            probs=tf.transpose(a=tf.stack(values=probs,axis=2),perm=[0,2,1])
+            # hua 2, 改：
+            probs=tf.cast(tf.transpose(a=tf.stack(values=probs,axis=2),perm=[0,2,1]),tf.float64)
+            #probs=tf.transpose(a=tf.stack(values=probs,axis=2),perm=[0,2,1])
             one_hot_samples=tf.one_hot(samples,depth=self.inputdim, dtype = tf.float64)
 
             self.log_probs=tf.reduce_sum(input_tensor=tf.math.log(tf.reduce_sum(input_tensor=tf.multiply(probs,one_hot_samples),axis=2)),axis=1)

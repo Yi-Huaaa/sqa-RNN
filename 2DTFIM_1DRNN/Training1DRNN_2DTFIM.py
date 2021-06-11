@@ -1,4 +1,12 @@
-import tensorflow as tf
+# Date: 20210611 17:45, hua
+# 2D Ising model, 1D RNN model
+# Success to run
+# hua:2
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+tf.compat.v1.disable_eager_execution()
+import tensorflow as tf2
+
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR) #stop displaying tensorflow warnings
 import numpy as np
 import os
@@ -67,11 +75,11 @@ def Ising2D_local_energies(Jz, Bx, Nx, Ny, samples, queue_samples, log_probs_ten
 
     queue_samples_reshaped = np.reshape(queue_samples, [(N+1)*numsamples, N])
     for i in range(steps):
-      if i < steps-1:
-          cut = slice((i*len_sigmas)//steps,((i+1)*len_sigmas)//steps)
-      else:
-          cut = slice((i*len_sigmas)//steps,len_sigmas)
-      log_probs[cut] = sess.run(log_probs_tensor, feed_dict={samples_placeholder:queue_samples_reshaped[cut]})
+        if i < steps-1:
+            cut = slice((i*len_sigmas)//steps,((i+1)*len_sigmas)//steps)
+        else:
+            cut = slice((i*len_sigmas)//steps,len_sigmas)
+        log_probs[cut] = sess.run(log_probs_tensor, feed_dict={samples_placeholder:queue_samples_reshaped[cut]})
 
     log_probs_reshaped = np.reshape(log_probs, [N+1,numsamples])
     for j in range(numsamples):
@@ -87,22 +95,24 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
     tf.compat.v1.reset_default_graph()
     random.seed(seed)  # `python` built-in pseudo-random generator
     np.random.seed(seed)  # numpy pseudo-random generator
-    tf.compat.v1.set_random_seed(seed)  # tensorflow pseudo-random generator
+    tf2.random.set_seed(seed)
+    #tf.compat.v1.set_random_seed(seed)  # tensorflow pseudo-random generator
 
-    # Intitializing the RNN-----------
-    units=[num_units]*num_layers#list containing the number of hidden units for each layer of the networks
-
+# Intitializing the RNN-----------
     Nx=systemsize_x #x dim
     Ny=systemsize_y #y dim
 
+    units=[num_units]*num_layers#list containing the number of hidden units for each layer of the networks
+    input_dim=2 #spin dim
+    numsamples_=20 #only for initialization; 
+    
     Jz = +np.ones((Nx,Ny)) #Ferromagnetic couplings
     lr=np.float64(learningrate)
     
-    input_dim=2 #Dimension of the Hilbert space for each site (here = 2, up or down)
-    numsamples_=20 #only for initialization; later I'll use a much larger value (see below)
-
-    wf=RNNwavefunction(Nx,Ny,units=units,cell=tf.contrib.cudnn_rnn.CudnnCompatibleGRUCell) #contains the graph with the RNNs
-    sampling=wf.sample(numsamples_,input_dim) #call this function once to create the dense layers
+    #hua 1: 改
+    wf = RNNwavefunction(Nx,Ny,units = units, cell = tf.keras.layers.GRUCell)    
+    #wf=RNNwavefunction(Nx,Ny,units=units,cell=tf.contrib.cudnn_rnn.CudnnCompatibleGRUCell) #contains the graph with the RNNs
+    sampling=wf.sample(numsamples_, input_dim) #call this function once to create the dense layers
 
     #now initialize everything --------------------
     with wf.graph.as_default():
@@ -119,13 +129,18 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
     #Starting Session------------
     #Activating GPU
     config = tf.compat.v1.ConfigProto()
-    config.gpu_options.allow_growth = True
+    # hua, 改
+    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    for device in gpu_devices:
+        tf.config.experimental.set_memory_growth(device, True)
+    #config.gpu_options.allow_growth = True
 
     sess=tf.compat.v1.Session(graph=wf.graph, config=config)
     sess.run(init)
     #---------------------------
 
-
+    '''
+    hua, 這部分先隱藏：
     #Building the graph -------------------
 
     path=os.getcwd()
@@ -138,7 +153,7 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
         ending+='_{0}'.format(u)
     filename='../Check_Points/2DTFIM/RNNwavefunction_GRURNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending+'.ckpt'
     savename = '_2DTFIM'
-
+    '''
     with tf.compat.v1.variable_scope(wf.scope,reuse=tf.compat.v1.AUTO_REUSE):
         with wf.graph.as_default():
             Eloc=tf.compat.v1.placeholder(dtype=tf.float64,shape=[numsamples])
@@ -212,7 +227,7 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
 
                 if it%10==0:
                     print('mean(E): {0}, var(E): {1}, #samples {2}, #Step {3} \n\n'.format(meanE,varE,numsamples, it))
-                
+                '''
                 #Comment if you don't want to save if saving gives you errors
                 if it%500==0:
                     #Saving the model
@@ -220,10 +235,10 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
                 
                 #Comment if you don't want to save if saving gives you errors
                 if it%10==0:
-                  #Saving the performances
-                  np.save('../Check_Points/2DTFIM/meanEnergy_GRURNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending  + savename +'.npy', meanEnergy)
-                  np.save('../Check_Points/2DTFIM/varEnergy_GRURNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending + savename +'.npy', varEnergy)
-
+                    #Saving the performances
+                    np.save('../Check_Points/2DTFIM/meanEnergy_GRURNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending  + savename +'.npy', meanEnergy)
+                    np.save('../Check_Points/2DTFIM/varEnergy_GRURNN_'+str(Nx)+'x'+ str(Ny) +'_Bx'+str(Bx)+'_lradap'+str(lr)+'_samp'+str(numsamples)+ending + savename +'.npy', varEnergy)
+                '''
                 #lr decay
                 lr_decayed = 1/((1/lr)+(it/10))
                 #Optimization step
