@@ -41,8 +41,9 @@ def Ising_local_energies(Jz, Bx, samples, queue_samples, log_probs_tensor, sampl
     N = samples.shape[1]
 
     local_energies = np.zeros((numsamples), dtype = np.float64)
-
-    for i in range(N-1): #diagonal elements
+    
+    #diagonal elements
+    for i in range(N-1): 
         values = samples[:,i]+samples[:,i+1]
         valuesT = np.copy(values)
         valuesT[values==2] = +1 #If both spins are up
@@ -54,7 +55,8 @@ def Ising_local_energies(Jz, Bx, samples, queue_samples, log_probs_tensor, sampl
     queue_samples[0] = samples #storing the diagonal samples
 
     if Bx != 0:
-        for i in range(N):  #Non-diagonal elements
+        #Non-diagonal elements
+        for i in range(N):  
             valuesT = np.copy(samples)
             valuesT[:,i][samples[:,i]==1] = 0 #Flip
             valuesT[:,i][samples[:,i]==0] = 1 #Flip
