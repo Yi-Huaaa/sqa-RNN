@@ -89,7 +89,7 @@ def Ising2D_local_energies(Jz, Bx, Nx, Ny, samples, queue_samples, log_probs_ten
 #--------------------------
 
 # ---------------- Running VMC with RNNs -------------------------------------
-def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, num_units = 50, num_layers = 1, numsamples = 500, learningrate = 1e-3, seed = 333):
+def run_2DTFIM(RNNtype = 0, activationType = 0, numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, num_units = 50, num_layers = 1, numsamples = 500, learningrate = 1e-3, seed = 333):
 
     #Seeding
     tf.compat.v1.reset_default_graph()
@@ -109,8 +109,24 @@ def run_2DTFIM(numsteps = 2*10**4, systemsize_x = 5, systemsize_y = 5, Bx = +2, 
     Jz = +np.ones((Nx,Ny)) #Ferromagnetic couplings
     lr=np.float64(learningrate)
     
+    # shw
+    # origin: cell=tf.contrib.cudnn_rnn.CudnnCompatibleGRUCell
+    RNNcells = [
+        tf.keras.layers.SimpleRNNCell,
+        tf.keras.layers.GRUCell,
+        tf.keras.layers.LSTMCell,
+    ]
+    activationFunctions = [
+        tf.keras.activations.elu, 
+        tf.keras.activations.relu,
+        tf.keras.activations.exponential,
+        tf.keras.activations.sigmoid
+    ]
+    print("cell type: ", RNNcells[RNNtype])
+    print("activation Functions", activationFunctions[activationType])
+    wf = RNNwavefunction(Nx,Ny, units = units, cell = RNNcells[RNNtype], activation = activationFunctions[activationType])    
     #hua 1: 改
-    wf = RNNwavefunction(Nx,Ny,units = units, cell = tf.keras.layers.GRUCell)    
+    #wf = RNNwavefunction(Nx,Ny,units = units, cell = tf.keras.layers.GRUCell)    
     #wf=RNNwavefunction(Nx,Ny,units=units,cell=tf.contrib.cudnn_rnn.CudnnCompatibleGRUCell) #contains the graph with the RNNs
     sampling=wf.sample(numsamples_, input_dim) #call this function once to create the dense layers
 

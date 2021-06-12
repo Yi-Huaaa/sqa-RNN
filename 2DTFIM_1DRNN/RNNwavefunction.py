@@ -8,8 +8,9 @@ import random
 
 
 class RNNwavefunction(object):
-    def __init__(self,systemsize_x, systemsize_y, cell = tf.compat.v1.nn.rnn_cell.GRUCell,activation=tf.nn.elu,units=[10],scope='RNNwavefunction',seed = 111):
-        """
+    #def __init__(self,systemsize_x, systemsize_y, cell = tf.compat.v1.nn.rnn_cell.GRUCell,activation = tf.nn.elu,units=[10],scope='RNNwavefunction',seed = 111):
+    def __init__(self, systemsize_x, systemsize_y, cell, activation, units=[10],scope='RNNwavefunction',seed = 111):
+        """ 
             systemsize_x:  int
                          number of sites for x-axis
             systemsize_y:  int
